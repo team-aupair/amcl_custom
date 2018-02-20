@@ -1255,7 +1255,6 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
               (i * angle_increment);
     }
 
-	
 	if (use_orb_slam_) {
 		tf::StampedTransform transform;
 		try {
@@ -1267,6 +1266,7 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
 			}
 		}
 		catch (const tf::LookupException& e) {
+			ROS_INFO("Failed!");
 			lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata);
 		}
 	}
