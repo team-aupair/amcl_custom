@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <unistd.h>
+#include <iostream>
 
 #include "amcl_laser.h"
 
@@ -332,15 +333,27 @@ double AMCLLaser::LikelihoodFieldModel(AMCLLaserData *data, pf_sample_set_t* set
 	}
 
 	if (use_orb) {
-		sample = set->samples;
-		total_weight -= sample->weight;
-		pose = sample->pose;
+		std::cout << "particle num: " << set->sample_count;
 
-		pose.v[0] = x;
-		pose.v[1] = y;
-		pose.v[2] = r;
-		sample->weight = 1.0;
-		total_weight += sample->weight;
+		int new_ptcl_num = 50;
+		j = ((set->sample_count + new_ptcl_num <= self->max_samples) ? set->sample_count : self->max_samples - new_ptcl_num);
+		for (j = set->sample_count; j < set->sample_count+ new_ptcl_num; j++)
+		{
+			sample = set->samples + j;
+			pose = sample->pose;
+			if (j < set->sample_count)
+				total_weight -= sample->weight;
+
+			pose.v[0] = x;
+			pose.v[1] = y;
+			pose.v[2] = r;
+			sample->weight = 1.0/ new_ptcl_num;
+			total_weight += sample->weight;
+		}
+		set->sample_count = j;
+
+		std::cout << " to: " << set->sample_count << std::endl;
+		std::cout << "total_weight: " << total_weight << std::endl;
 	}
 
 	return(total_weight);

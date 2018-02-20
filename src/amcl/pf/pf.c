@@ -29,6 +29,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdio.h>
 
 #include "pf.h"
 #include "pf_pdf.h"
@@ -271,6 +272,8 @@ void pf_update_sensor_(pf_t *pf, pf_sensor_model_fn_t_ sensor_fn, void *sensor_d
   set = pf->sets + pf->current_set;
 
   // Compute the sample weights
+  printf("pf_update_sensor_ called\n");
+
   if(r<10 && r > -10)
     total = (*sensor_fn) (sensor_data, set, x, y, r, 1);
   else
@@ -375,6 +378,8 @@ void pf_update_resample(pf_t *pf)
   double* c;
 
   double w_diff;
+
+  printf("pf_update_resample called\n");
 
   set_a = pf->sets + pf->current_set;
   set_b = pf->sets + (pf->current_set + 1) % 2;
