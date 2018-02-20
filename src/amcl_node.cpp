@@ -152,7 +152,7 @@ class AmclNode
                         nav_msgs::SetMap::Response& res);
 	/*ORB
 	void setTfCallback();*/
-	tf::StampedTransform prev_transform;
+	tf::StampedTransform* prev_transform;
 	
     void laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan);
     void initialPoseReceived(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
@@ -1259,13 +1259,14 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
 	if (use_orb_slam_) {
 		tf::StampedTransform transform;
 		try {
-			tf_.lookupTransform(global_frame_id_, orb_frame_id_, ros::Time(0), transform);
-			if (prev_transform == NULL || prev_transform.stamp_ != transform.stamp_) {
-				lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata, transform.getOrigin().x, transform.getOrigin().y, transform.getRotation().getAngle());
+			tf_->lookupTransform(global_frame_id_, orb_frame_id_, ros::Time(0), transform);
+			ROS_INFO("orb_base_link: %f, %f, %f", transform.getOrigin().x(), transform.getOrigin().y(), transform.getRotation().getAngle());
+			if (prev_transform == NULL || prev_transform->stamp_ != transform.stamp_) {
+				lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata, transform.getOrigin().x(), transform.getOrigin().y(), transform.getRotation().getAngle());
+				prev_transform = &transform;
 			}
 		}
 		catch (const tf::LookupException& e) {
-			cerr << e.what();
 			lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata);
 		}
 	}

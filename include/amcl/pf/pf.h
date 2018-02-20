@@ -54,6 +54,8 @@ typedef void (*pf_action_model_fn_t) (void *action_data,
 typedef double (*pf_sensor_model_fn_t) (void *sensor_data, 
                                         struct _pf_sample_set_t* set);
 
+typedef double (*pf_sensor_model_fn_t_) (void *sensor_data, struct _pf_sample_set_t* set,
+                                         double x, double y, double r, int use);
 
 // Information for a single sample
 typedef struct
@@ -155,7 +157,7 @@ void pf_update_action(pf_t *pf, pf_action_model_fn_t action_fn, void *action_dat
 
 // Update the filter with some new sensor observation
 void pf_update_sensor(pf_t *pf, pf_sensor_model_fn_t sensor_fn, void *sensor_data);
-void pf_update_sensor(pf_t *pf, pf_sensor_model_fn_t sensor_fn, void *sensor_data, double x, double y, double r);
+void pf_update_sensor_(pf_t *pf, pf_sensor_model_fn_t_ sensor_fn, void *sensor_data, double x, double y, double r);
 
 // Resample the distribution
 void pf_update_resample(pf_t *pf);

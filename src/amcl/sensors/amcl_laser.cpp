@@ -127,7 +127,7 @@ bool AMCLLaser::UpdateSensor(pf_t *pf, AMCLSensorData *data, double x, double y,
   if(this->model_type == LASER_MODEL_BEAM)
     pf_update_sensor(pf, (pf_sensor_model_fn_t) BeamModel, data);
   else if(this->model_type == LASER_MODEL_LIKELIHOOD_FIELD)
-    pf_update_sensor(pf, (pf_sensor_model_fn_t) LikelihoodFieldModel, data, x, y, r);  
+    pf_update_sensor_(pf, (pf_sensor_model_fn_t_) LikelihoodFieldModel, data, x, y, r);  
   else if(this->model_type == LASER_MODEL_LIKELIHOOD_FIELD_PROB)
     pf_update_sensor(pf, (pf_sensor_model_fn_t) LikelihoodFieldModelProb, data);  
   else
@@ -145,7 +145,7 @@ bool AMCLLaser::UpdateSensor(pf_t *pf, AMCLSensorData *data)
 	if (this->model_type == LASER_MODEL_BEAM)
 		pf_update_sensor(pf, (pf_sensor_model_fn_t)BeamModel, data);
 	else if (this->model_type == LASER_MODEL_LIKELIHOOD_FIELD)
-		pf_update_sensor(pf, (pf_sensor_model_fn_t)LikelihoodFieldModel, data);
+		pf_update_sensor_(pf, (pf_sensor_model_fn_t_)LikelihoodFieldModel, data, 0, 0, -1000);
 	else if (this->model_type == LASER_MODEL_LIKELIHOOD_FIELD_PROB)
 		pf_update_sensor(pf, (pf_sensor_model_fn_t)LikelihoodFieldModelProb, data);
 	else
