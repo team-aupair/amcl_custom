@@ -165,7 +165,7 @@ class AmclNode
     void updatePoseFromServer();
     void applyInitialPose();
 
-    double getYaw(tf::Pose& t);
+    double getYaw(tf::Transform& t);
 
     //parameter for what odom to use
     std::string odom_frame_id_;
@@ -1264,9 +1264,9 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
 		tf::StampedTransform transform;
 		try {
 			tf_->lookupTransform(global_frame_id_, orb_frame_id_, ros::Time(0), transform);
-			ROS_INFO("orb_base_link: %f, %f, %f", transform.getOrigin().x(), transform.getOrigin().y(), transform.getRotation().getAngle());
+			ROS_INFO("orb_base_link: %f, %f, %f", transform.getOrigin().x(), transform.getOrigin().y(), getYaw(transform));
 			if (prev_transform == NULL || prev_transform->stamp_ != transform.stamp_) {
-				lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata, transform.getOrigin().x(), transform.getOrigin().y(), transform.getRotation().getAngle());
+				lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata, transform.getOrigin().x(), transform.getOrigin().y(), getYaw(transform));
 				prev_transform = &transform;
 			}
 		}
@@ -1472,12 +1472,13 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
 }
 
 double
-AmclNode::getYaw(tf::Pose& t)
+AmclNode::getYaw(tf::Transform& t)
 {
   double yaw, pitch, roll;
   t.getBasis().getEulerYPR(yaw,pitch,roll);
   return yaw;
 }
+
 
 void
 AmclNode::initialPoseReceived(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)

@@ -272,8 +272,6 @@ void pf_update_sensor_(pf_t *pf, pf_sensor_model_fn_t_ sensor_fn, void *sensor_d
   set = pf->sets + pf->current_set;
 
   // Compute the sample weights
-  printf("pf_update_sensor_ called\n");
-
   if(r<10 && r > -10)
     total = (*sensor_fn) (sensor_data, set, x, y, r, 1);
   else
@@ -379,8 +377,6 @@ void pf_update_resample(pf_t *pf)
 
   double w_diff;
 
-  printf("pf_update_resample called\n");
-
   set_a = pf->sets + pf->current_set;
   set_b = pf->sets + (pf->current_set + 1) % 2;
 
@@ -455,13 +451,13 @@ void pf_update_resample(pf_t *pf)
           break;
       }
       assert(i<set_a->sample_count);
-
       sample_a = set_a->samples + i;
 
       assert(sample_a->weight > 0);
 
       // Add sample to list
       sample_b->pose = sample_a->pose;
+      //printf("%f ", sample_b->pose.v[0]);
     }
 
     sample_b->weight = 1.0;
@@ -474,7 +470,8 @@ void pf_update_resample(pf_t *pf)
     if (set_b->sample_count > pf_resample_limit(pf, set_b->kdtree->leaf_count))
       break;
   }
-  
+  //printf("\nset_b->sample_count: %d\n", set_b->sample_count);   
+
   // Reset averages, to avoid spiraling off into complete randomness.
   if(w_diff > 0.0)
     pf->w_slow = pf->w_fast = 0.0;

@@ -243,6 +243,7 @@ double AMCLLaser::LikelihoodFieldModel(AMCLLaserData *data, pf_sample_set_t* set
 	const double PI = 3.141592653589793238463;
 	pf_sample_t *sample;
 	pf_vector_t pose;
+	pf_vector_t *pose_;
 	pf_vector_t hit;
 
 	self = (AMCLLaser*)data->sensor;
@@ -335,7 +336,7 @@ double AMCLLaser::LikelihoodFieldModel(AMCLLaserData *data, pf_sample_set_t* set
 	if (use_orb) {
 		std::cout << "particle num: " << set->sample_count;
 
-		int new_ptcl_num = 50;
+		/*int new_ptcl_num = 50;
 		j = ((set->sample_count + new_ptcl_num <= self->max_samples) ? set->sample_count : self->max_samples - new_ptcl_num);
 		for (j = set->sample_count; j < set->sample_count+ new_ptcl_num; j++)
 		{
@@ -350,10 +351,19 @@ double AMCLLaser::LikelihoodFieldModel(AMCLLaserData *data, pf_sample_set_t* set
 			sample->weight = 1.0/ new_ptcl_num;
 			total_weight += sample->weight;
 		}
-		set->sample_count = j;
+		set->sample_count = j;*/
+		sample = set->samples;
+		pose_ = &(sample->pose);
+		total_weight += (-sample->weight + 0.3);
+		pose_->v[0] = x;
+		pose_->v[1] = y;
+		pose_->v[2] = r;
+		sample->weight = 0.3;
 
 		std::cout << " to: " << set->sample_count << std::endl;
 		std::cout << "total_weight: " << total_weight << std::endl;
+		pose = set->samples->pose;
+		std::cout << "ptcl 0 pose: " << pose.v[0] << ", " << pose.v[1] << ", " << pose.v[2] << std::endl;
 	}
 
 	return(total_weight);
