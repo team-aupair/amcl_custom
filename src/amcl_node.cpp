@@ -449,9 +449,8 @@ AmclNode::AmclNode() :
                                                         100);
   laser_scan_filter_->registerCallback(boost::bind(&AmclNode::laserReceived,
                                                    this, _1));
-  /*ORB
   initial_pose_sub_ = nh_.subscribe("initialpose", 2, &AmclNode::initialPoseReceived, this);
-  tf_connection = tf_->addTransformsChangedListener(boost::bind(&AmclNode::setTfCallback, this));*/
+  //tf_connection = tf_->addTransformsChangedListener(boost::bind(&AmclNode::setTfCallback, this));
   prev_transform = NULL;
 
   //requestMap();
