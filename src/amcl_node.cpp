@@ -152,7 +152,7 @@ class AmclNode
                         nav_msgs::SetMap::Response& res);
 	/*ORB
 	void setTfCallback();*/
-	tf::StampedTransform* prev_transform;
+    double prev_transform;
 	
     void laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan);
     void initialPoseReceived(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
@@ -451,7 +451,8 @@ AmclNode::AmclNode() :
                                                    this, _1));
   initial_pose_sub_ = nh_.subscribe("initialpose", 2, &AmclNode::initialPoseReceived, this);
   //tf_connection = tf_->addTransformsChangedListener(boost::bind(&AmclNode::setTfCallback, this));
-  prev_transform = NULL;
+  prev_transform = -1.0;
+  nh_.setParam("use_orb_slam", use_orb_slam_);
 
   //requestMap();
   if(use_map_topic_) {
@@ -1259,14 +1260,21 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
               (i * angle_increment);
     }
 
+    nh_.getParam("use_orb_slam", use_orb_slam_);
+
 	if (use_orb_slam_) {
 		tf::StampedTransform transform;
 		try {
 			tf_->lookupTransform(global_frame_id_, orb_frame_id_, ros::Time(0), transform);
 			ROS_INFO("orb_base_link: %f, %f, %f", transform.getOrigin().x(), transform.getOrigin().y(), getYaw(transform));
-			if (prev_transform == NULL || prev_transform->stamp_ != transform.stamp_) {
+			ROS_INFO("Timestamp: %f", transform.stamp_.toSec());
+			if (prev_transform != transform.stamp_.toSec()) {
 				lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata, transform.getOrigin().x(), transform.getOrigin().y(), getYaw(transform));
-				prev_transform = &transform;
+				prev_transform = transform.stamp_.toSec();
+			}
+			else {
+				ROS_INFO("Old transform!");
+				lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata);
 			}
 		}
 		catch (const tf::LookupException& e) {
