@@ -152,7 +152,13 @@ class AmclNode
                         nav_msgs::SetMap::Response& res);
 	/*ORB
 	void setTfCallback();*/
-    double prev_transform;
+    double prev_t;
+	double prev_x;
+	double prev_y;
+	double outrange_t;
+	double outrange_x;
+	double outrange_y;
+	bool outrange_valid;
 	
     void laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan);
     void initialPoseReceived(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
@@ -451,7 +457,13 @@ AmclNode::AmclNode() :
                                                    this, _1));
   initial_pose_sub_ = nh_.subscribe("initialpose", 2, &AmclNode::initialPoseReceived, this);
   //tf_connection = tf_->addTransformsChangedListener(boost::bind(&AmclNode::setTfCallback, this));
-  prev_transform = -1.0;
+  prev_t = -1.0;
+  prev_x = 0.0;
+  prev_y = 0.0;
+  outrange_t = -1.0;
+  outrange_x = 0.0;
+  outrange_y = 0.0;
+  outrange_valid = false;
   nh_.setParam("use_orb_slam", use_orb_slam_);
 
   //requestMap();
@@ -1265,20 +1277,48 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
 	if (use_orb_slam_) {
 		tf::StampedTransform transform;
 		try {
+			tf_->waitForTransform(global_frame_id_, orb_frame_id_, ros::Time(0), ros::Duration(10.0));
 			tf_->lookupTransform(global_frame_id_, orb_frame_id_, ros::Time(0), transform);
 			ROS_INFO("orb_base_link: %f, %f, %f", transform.getOrigin().x(), transform.getOrigin().y(), getYaw(transform));
 			ROS_INFO("Timestamp: %f", transform.stamp_.toSec());
-			if (prev_transform != transform.stamp_.toSec()) {
-				lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata, transform.getOrigin().x(), transform.getOrigin().y(), getYaw(transform));
-				prev_transform = transform.stamp_.toSec();
-			}
-			else {
+			double x_ = transform.getOrigin().x();
+			double y_ = transform.getOrigin().y();
+			double t_ = transform.stamp_.toSec();
+
+			if (prev_t == transform.stamp_.toSec()) { // no new transform
 				ROS_INFO("Old transform!");
+				outrange_valid = false;
 				lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata);
 			}
+			else if( ( (prev_x-x_)*(prev_x-x_) + (prev_y-y_)*(prev_y-y_) ) <
+					(prev_t-t_)*(prev_t-t_)*0.5 || 
+					 ( outrange_valid && ( (outrange_x-x_)*(outrange_x-x_) 
+                    + (outrange_y-y_)*(outrange_y-y_) < (outrange_t-t_)*(outrange_t-t_)*0.5 )) )
+			{
+				ROS_INFO("Valid!");
+				prev_t = t_;
+				prev_x = x_;
+				prev_y = y_;
+				outrange_valid = false;
+				lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata, x_, y_, getYaw(transform));
+			}
+
+			else { //teleport!
+				ROS_INFO("Teleport!");
+				outrange_t = t_;
+				outrange_x = x_;
+				outrange_y = y_;
+				outrange_valid = true;
+				lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata);
+			}	
+				
 		}
-		catch (const tf::LookupException& e) {
-			ROS_INFO("Failed!");
+		catch (const tf::LookupException& e ) {
+			ROS_INFO("Failed! - LookupException");
+			lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata);
+		}
+		catch (const tf::ExtrapolationException& e ) {
+			ROS_INFO("Failed! - ExtrapolationException");
 			lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata);
 		}
 	}
