@@ -1277,7 +1277,7 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
 	if (use_orb_slam_) {
 		tf::StampedTransform transform;
 		try {
-			tf_->waitForTransform(global_frame_id_, orb_frame_id_, ros::Time(0), ros::Duration(10.0));
+			//tf_->waitForTransform(global_frame_id_, orb_frame_id_, ros::Time(0), ros::Duration(10.0));
 			tf_->lookupTransform(global_frame_id_, orb_frame_id_, ros::Time(0), transform);
 			ROS_INFO("orb_base_link: %f, %f, %f", transform.getOrigin().x(), transform.getOrigin().y(), getYaw(transform));
 			ROS_INFO("Timestamp: %f", transform.stamp_.toSec());
