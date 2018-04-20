@@ -48,6 +48,7 @@
 #include "geometry_msgs/Pose.h"
 #include "nav_msgs/GetMap.h"
 #include "nav_msgs/SetMap.h"
+#include "nav_msgs/OccupancyGrid.h"
 #include "std_srvs/Empty.h"
 
 // For transform support
@@ -107,6 +108,14 @@ angle_diff(double a, double b)
 
 static const std::string scan_topic_ = "scan";
 
+//ORB_ map
+signed char* map_data = NULL;
+float map_resolution;
+double map_orig_x;
+double map_orig_y;
+unsigned int map_width;
+unsigned int map_height;
+
 class AmclNode
 {
   public:
@@ -150,8 +159,9 @@ class AmclNode
                                     std_srvs::Empty::Response& res);
     bool setMapCallback(nav_msgs::SetMap::Request& req,
                         nav_msgs::SetMap::Response& res);
-	/*ORB
-	void setTfCallback();*/
+	/*ORB*/
+	//void gridMapCallback(const nav_msgs::OccupancyGridConstPtr& msg);
+
     double prev_t;
 	double prev_x;
 	double prev_y;
@@ -205,9 +215,8 @@ class AmclNode
     std::vector< bool > lasers_update_;
     std::map< std::string, int > frame_to_laser_;
 
-	/*ORB
-	boost::signals2::connection tf_connection;
-	*/
+	/*ORB*/
+    //ros::Subscriber gridMap_sub_;
     // Particle filter
     pf_t *pf_;
     double pf_err_, pf_z_;
@@ -457,6 +466,7 @@ AmclNode::AmclNode() :
                                                    this, _1));
   initial_pose_sub_ = nh_.subscribe("initialpose", 2, &AmclNode::initialPoseReceived, this);
   //tf_connection = tf_->addTransformsChangedListener(boost::bind(&AmclNode::setTfCallback, this));
+  //gridMap_sub_ = nh_.subscribe("/move_base/global_costmap/costmap", 1, &AmclNode::gridMapCallback, this);
   prev_t = -1.0;
   prev_x = 0.0;
   prev_y = 0.0;
@@ -842,6 +852,19 @@ void
 AmclNode::handleMapMessage(const nav_msgs::OccupancyGrid& msg)
 {
   boost::recursive_mutex::scoped_lock cfl(configuration_mutex_);
+
+  //ORB
+  std::vector<signed char> map_data_ = msg.data;
+  if(map_data != NULL)
+	  delete map_data;
+  map_data = new signed char[msg.info.width*msg.info.height];
+  for(int i=0; i<msg.info.width*msg.info.height; i++)
+	  map_data[i] = map_data_[i];
+  map_resolution = msg.info.resolution;
+  map_orig_x = msg.info.origin.position.x;
+  map_orig_y = msg.info.origin.position.y;
+  map_width = msg.info.width;
+  map_height = msg.info.height;
 
   ROS_INFO("Received a %d X %d map @ %.3f m/pix\n",
            msg.info.width,

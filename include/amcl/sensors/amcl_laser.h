@@ -107,6 +107,9 @@ class AMCLLaser : public AMCLSensor
 
   private: void reallocTempData(int max_samples, int max_obs);
 
+  // ORB
+  private: int getGridMapValue(double x, double y);
+
   private: laser_model_t model_type;
 
   // Current data timestamp

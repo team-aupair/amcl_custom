@@ -38,6 +38,14 @@
 
 using namespace amcl;
 
+//global variables from amcl_node.cpp
+extern signed char* map_data;
+extern float map_resolution;
+extern double map_orig_x;
+extern double map_orig_y;
+extern unsigned int map_width;
+extern unsigned int map_height;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Default constructor
 AMCLLaser::AMCLLaser(size_t max_beams, map_t* map) : AMCLSensor(), 
@@ -317,16 +325,19 @@ double AMCLLaser::LikelihoodFieldModel(AMCLLaserData *data, pf_sample_set_t* set
 			p += pz*pz*pz;
 		}
 
+		//use map information
+		p = p / self->getGridMapValue(pose.v[0], pose.v[1]);
+
 		if (use_orb) {
 			pose = sample->pose;
 			dist = sqrt(pow(pose.v[0] - x, 2.0) + pow(pose.v[1] - y, 2.0));
 			dist_r = fmod(fabs(pose.v[2] - r), 2 * PI);
 			dist_r = (dist_r > PI) ? (2 * PI - dist_r) / PI : dist_r / PI;
 
-			if (dist > 1.0) p *= 0.3;
-			else if (dist > 0.1) p *= 1 - (0.7 * (dist - 0.1) / 0.9);
+			if (dist > 3.0) p *= 0.5;
+			else if (dist > 1.0) p *= 1 - (0.5 * (dist - 1.0) / 2.0);
 
-			p *= (1 - dist_r) * 0.8 + 0.2;
+			p *= (1 - dist_r) * 0.5 + 0.5;
 		}
 
 		sample->weight *= p;
@@ -559,3 +570,26 @@ void AMCLLaser::reallocTempData(int new_max_samples, int new_max_obs){
     temp_obs[k] = new double[max_obs]();
   }
 }
+
+int AMCLLaser::getGridMapValue(double x, double y)
+{
+	if(map_data == NULL)
+		return 1;
+	
+	double x_map = y - map_orig_y;
+	double y_map = x - map_orig_x;
+
+	int x_map_idx = (int) (x_map / map_resolution);
+	int y_map_idx = (int) (y_map / map_resolution);
+
+	if(x_map_idx < 0 || y_map_idx < 0)
+		return 1;
+	if (x_map_idx > map_height || y_map_idx > map_width)
+		return 1;
+
+	int val = (int) map_data[x_map_idx*map_width + y_map_idx];
+
+	return (val > 0) ? val : 1;
+}
+
+
