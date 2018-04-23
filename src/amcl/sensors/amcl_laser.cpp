@@ -334,10 +334,10 @@ double AMCLLaser::LikelihoodFieldModel(AMCLLaserData *data, pf_sample_set_t* set
 			dist_r = fmod(fabs(pose.v[2] - r), 2 * PI);
 			dist_r = (dist_r > PI) ? (2 * PI - dist_r) / PI : dist_r / PI;
 
-			if (dist > 3.0) p *= 0.5;
-			else if (dist > 1.0) p *= 1 - (0.5 * (dist - 1.0) / 2.0);
+			if (dist > 2.0) p *= 0.3;
+			else if (dist > 0.5) p *= 1 - (0.7 * (dist - 0.5) / 1.5);
 
-			p *= (1 - dist_r) * 0.5 + 0.5;
+			p *= (1 - dist_r) * 0.7 + 0.3;
 		}
 
 		sample->weight *= p;
