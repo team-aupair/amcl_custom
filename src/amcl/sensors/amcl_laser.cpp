@@ -589,7 +589,7 @@ int AMCLLaser::getGridMapValue(double x, double y)
 
 	int val = (int) map_data[x_map_idx*map_width + y_map_idx];
 
-	return (val > 0) ? val : 1;
+	return (val == 0) ? 1 : 100;
 }
 
 
